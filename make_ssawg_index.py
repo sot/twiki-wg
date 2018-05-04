@@ -108,12 +108,12 @@ def get_opt():
                         type=str,
                         default='.',
                         help='Output data directory')
-    parser.add_argument('--agendas-file',
+    parser.add_argument('--index-file',
                         type=str,
                         default='ssawg_index.html',
-                        help='Output agendas HTML file')
+                        help='Output index HTML file')
     parser.add_argument('--start',
-                        default='2018x01x01',
+                        default='2009x01x01',
                         type=str,
                         help='Start date in TWiki format e.g. 2009x01x01')
     parser.add_argument('--stop',
@@ -129,7 +129,7 @@ def main():
     # page.
     opt = get_opt()
 
-    agendas_filename = os.path.join(opt.data_dir, opt.agendas_file)
+    agendas_filename = os.path.join(opt.data_dir, opt.index_file)
     agendas_page = bs4.BeautifulSoup(open(agendas_filename).read(), 'lxml')
     agendas_index = agendas_page.find('div', id='ssawg_agendas')
 
