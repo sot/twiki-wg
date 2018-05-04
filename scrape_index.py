@@ -56,6 +56,51 @@ def find_tag(tag, name, text):
             return content_tag
 
 
+def get_other_notebooks(agenda_div, meeting_page):
+    """
+    Get links to jupyter notebooks which are within the meeting page
+    but NOT already in the main agenda.
+    """
+    # Notebooks within the new agenda_div
+    agenda_nbs = {}
+    for tag in agenda_div.find_all('a'):
+        if tag.get('href', '').endswith('.ipynb'):
+            agenda_nbs[tag['href']] = tag
+
+    # All notebooks
+    all_nbs = {}
+    for tag in meeting_page.find_all('a'):
+        if tag.get('href', '').endswith('.ipynb'):
+            all_nbs[tag['href']] = tag
+
+    other_nbs = []
+    for href, tag in all_nbs.items():
+        if href not in agenda_nbs:
+            other_nbs.append((href, tag))
+
+    if other_nbs:
+        out = soup.new_tag('div')
+
+        h3 = soup.new_tag('h3')
+        h3.string = 'Additional notebooks in meeting notes'
+        out.append(h3)
+
+        ul = soup.new_tag('ul')
+        for href, tag in other_nbs:
+            li = soup.new_tag('li')
+            li.append(tag)
+            ul.append(li)
+        out.append(ul)
+
+    else:
+        out = None
+
+    return out
+
+
+# Dummy soup for making new tags
+soup = bs4.BeautifulSoup('', 'lxml')
+
 # The output of this process is a summary page named ``agendas_filename`` with
 # all the agenda sections glopped together.  First read and parse the existing
 # page.
@@ -101,13 +146,21 @@ for ii, new_link in enumerate(reversed(new_links)):
         meeting_agenda_ul = 'No agenda'
 
     # Make the new <div> with an enclosed <h2> plus agenda items
-    agenda_div = agendas_page.new_tag('div', id=meeting)
-    agenda_a = agendas_page.new_tag('a', href=new_link['href'])
+    agenda_div = soup.new_tag('div', id=meeting)
+
+    # Make the H2 meeting tag with link to original SSAWG meeting notes
+    agenda_h2 = soup.new_tag('h2')
+    agenda_a = soup.new_tag('a', href=new_link['href'], target='_blank')
     agenda_a.append(new_link.text[-10:])
-    agenda_h2 = agendas_page.new_tag('h2')
     agenda_h2.append(agenda_a)
+
     agenda_div.append(agenda_h2)
     agenda_div.append(meeting_agenda_ul)
+
+    # Jupyter notebooks in meeting page but not already in agenda section
+    other_nbs_div = get_other_notebooks(agenda_div, meeting_page)
+    if other_nbs_div:
+        agenda_div.append(other_nbs_div)
 
     for tag in agenda_div.find_all('a'):
         if tag['href'].startswith('/twiki'):
