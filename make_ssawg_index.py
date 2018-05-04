@@ -110,7 +110,7 @@ def get_opt():
                         help='Output data directory')
     parser.add_argument('--agendas-file',
                         type=str,
-                        default='agendas.html',
+                        default='ssawg_index.html',
                         help='Output agendas HTML file')
     parser.add_argument('--start',
                         default='2018x01x01',
