@@ -9,8 +9,7 @@ import Ska.ftp
 import re
 
 
-aspect_url = 'https://occweb.cfa.harvard.edu/twiki/bin/view/Aspect/'
-meeting_index_page = 'StarWorkingGroup'
+TWIKI_URL = 'https://occweb.cfa.harvard.edu/twiki/bin/view/'
 
 netrc = Ska.ftp.parse_netrc()
 if 'occweb' not in netrc:
@@ -27,8 +26,9 @@ def get_twiki_page(page):
     """
     Get and parse a TWiki page.
     """
-    print('Reading {} twiki page'.format(page))
-    r = requests.get(aspect_url + page, auth=(user, password))
+    url = TWIKI_URL + opt.working_group_web + '/' + page
+    print('Reading {} twiki page'.format(url))
+    r = requests.get(url, auth=(user, password))
     out = bs4.BeautifulSoup(r.text, 'lxml')
 
     return out
@@ -103,7 +103,7 @@ def get_other_notebooks(agenda_div, meeting_page):
 
 
 def get_opt():
-    parser = argparse.ArgumentParser(description='Make SSAWG index page')
+    parser = argparse.ArgumentParser(description='Make WG index page')
     parser.add_argument('--data-dir',
                         type=str,
                         default='.',
@@ -113,13 +113,27 @@ def get_opt():
                         default='ssawg_index.html',
                         help='Output index HTML file')
     parser.add_argument('--start',
-                        default='2009x01x01',
+                        default='2006x01x01',
                         type=str,
-                        help='Start date in TWiki format e.g. 2009x01x01')
+                        help='Start date in TWiki format (default=2006x01x01')
     parser.add_argument('--stop',
                         type=str,
                         help='Stop date')
+    parser.add_argument('--working-group-web',
+                        default='Aspect',
+                        type=str,
+                        help='Working group web name (e.g. Aspect, MPCWG)')
+    parser.add_argument('--meeting-root',
+                        default='StarWorkingGroupMeeting',
+                        type=str,
+                        help='Meeting notes root prefix (before the YYYYxMMxDD date)')
+    parser.add_argument('--meeting-index-page',
+                        default='StarWorkingGroup',
+                        type=str,
+                        help='Meeting archive index page')
+
     args = parser.parse_args()
+
     return args
 
 
@@ -127,27 +141,28 @@ def main():
     # The output of this process is a summary page named ``agendas_filename`` with
     # all the agenda sections glopped together.  First read and parse the existing
     # page.
+    global opt
     opt = get_opt()
 
     agendas_filename = os.path.join(opt.data_dir, opt.index_file)
     agendas_page = bs4.BeautifulSoup(open(agendas_filename).read(), 'lxml')
-    agendas_index = agendas_page.find('div', id='ssawg_agendas')
+    agendas_index = agendas_page.find('div', id='wg_agendas')
 
     # Remove the last two meetings to force reprocessing of those (e.g. if
     # content gets updated post-meeting).
-    re_ssawg = re.compile('StarWorkingGroupMeeting2\d\d\d')
-    agenda_divs = agendas_index.find_all('div', id=re_ssawg)
+    re_wg = re.compile(opt.meeting_root + r'2\d\d\d')
+    agenda_divs = agendas_index.find_all('div', id=re_wg)
     for agenda_div in agenda_divs[:2]:
         agenda_div.extract()
 
     # Get the main WG meeting index page with a <ul> list that looks like
-    # below within an H2 section 'Meeting Notes':
+    # below within an H2 section 'Meeting Notes', e.g.
     # * StarWorkingGroupMeeting2018x05x16
     # * StarWorkingGroupMeeting2018x05x02
     # * StarWorkingGroupMeeting2018x04x18
 
-    meeting_index = get_twiki_page(meeting_index_page)
-    meetings = find_tag(meeting_index, 'h2', 'Meeting Notes')
+    meeting_index = get_twiki_page(opt.meeting_index_page)
+    meetings = find_tag(meeting_index, 'h2', 'Meeting')
 
     # Narrow down to the list (UL) of links to meeting notes
     meeting_list = meetings.find_next(name='ul')
@@ -155,7 +170,7 @@ def main():
     # Find all the HREF links that are not already in the agendas_index
     links = meeting_list.find_all('a')
     links = [link for link in links
-             if link.text > 'StarWorkingGroupMeeting' + opt.start]
+             if link.text > opt.meeting_root + opt.start]
 
     new_links = [link for link in links
                  if not agendas_index.find('div', id=link.text)]
@@ -174,7 +189,7 @@ def main():
         # Make the new <div> with an enclosed <h2> plus agenda items
         agenda_div = soup.new_tag('div', id=meeting)
 
-        # Make the H2 meeting tag with link to original SSAWG meeting notes
+        # Make the H2 meeting tag with link to original WG meeting notes
         agenda_h2 = soup.new_tag('h2')
         agenda_a = soup.new_tag('a', href=new_link['href'], target='_blank')
         agenda_a.append(new_link.text[-10:])
