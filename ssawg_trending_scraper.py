@@ -376,5 +376,5 @@ with open('trending_template.html','r') as template_file:
 template = jinja2.Template(template_text)
 out_html = template.render(trending_official = trending_official)
 with open('trending.html', 'w') as trending_file:
-    trending_file.write(out_html)
-    
+    trending_file.write(out_html)  
+      
