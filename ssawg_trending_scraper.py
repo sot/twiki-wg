@@ -82,13 +82,10 @@ def proper_url(page, base_url):
                 month = now.month
                 url = (f'{base_url}{page}SUMMARY_DATA/{year}-M{month:02}/') # provides URL if halfway through month
                 response = requests.get(url)
-                if response.status_code >= 300:
-                    continue
+                if response.status_code < 300:
+                    return url
                 else:
-                    quick_check = requests.get(url).text
-                    soup = BeautifulSoup(quick_check, "lxml")
-                    if soup.title.text != "Missing Page":
-                        return url
+                    continue
             else: # if not halfway through the month, get previous month
                 now = datetime.now() + timedelta(days=-16) # offset of -16 days will get previous month
                 year = now.year
@@ -376,5 +373,4 @@ with open('trending_template.html','r') as template_file:
 template = jinja2.Template(template_text)
 out_html = template.render(trending_official = trending_official)
 with open('trending.html', 'w') as trending_file:
-    trending_file.write(out_html)  
-      
+    trending_file.write(out_html)
