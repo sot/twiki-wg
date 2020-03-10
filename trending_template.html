@@ -30,12 +30,9 @@
  </tr>
 </table>
 <body>
-   {% for trend_pages in trending_official %}
-   <hr>
-   {% for trend_page in trending_official[trend_pages] %}
-   {{trend_page}}
-   {% endfor %}
-   {% endfor %}
+  {% for html_chunk in html_chunks %}
+  {{ html_chunk }}
+  {% endfor %}
 
    <div class="cxcfooterlinks" align="center">
       <br clear="all">
