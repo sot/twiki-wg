@@ -140,9 +140,17 @@ class Page():
         else:
             raise RuntimeError(f'Investigate issues with {self.page}')
 
+        # Get URL text
         self.url_text = self.page_request.text
+        # Get soup from URL text
         self.soup = BeautifulSoup(self.url_text, "lxml")
-
+        # Replace relative links with absolute links; except celmon, which has no
+        # links to pull and causes an error with current implementation below
+        if self.page != "celmon":
+            for local_link in self.soup.find_all('a'):
+                temp = local_link['href']
+                local_link['href'] = self.url + temp
+        
         def get_elements(soup, element):
             """
             Grab various elements from page.
@@ -187,7 +195,7 @@ class Page():
                     new_tables[index] = re.sub('src="', f'src="{url}/', str(table))
             return new_tables
         
-        self.tables = get_tables(self.soup, "table", self.url)
+        self.tables = get_tables(self.soup, "table", self.url)        
         self.url_html = f'<a href = {str(self.url)}>{str(self.url)}</a><br>'
 
 
@@ -276,8 +284,11 @@ html_chunks.extend([
 
 tb = trending_blocks['obc_rate_noise/trending']
 html_chunks.extend([
-    tb.headers3[0],
-    tb.url_html,            
+    tb.headers2[0],
+    tb.headers2[0].next_sibling,
+    "<br><br>",
+    tb.url_html,
+    "<br><br>",          
     tb.images["pitch_time_recent.png"],
     tb.images["yaw_time_recent.png"],
     tb.images["roll_time_recent.png"],
@@ -374,7 +385,6 @@ html_chunks.extend([
     tb.tables[2],  
     "<hr>",       
 ])
-
 
 # --------------------------------------
 # Export through Jinja trending template
