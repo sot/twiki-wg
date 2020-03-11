@@ -31,10 +31,7 @@ import jinja2
 
 NETRC = Ska.ftp.parse_netrc()
 if 'periscope_drift_page' not in NETRC:
-    raise RuntimeError('must have authentication in ~/.netrc')
-
-USER_PERISCOPE = NETRC['periscope_drift_page']['login']
-PASSWORD = NETRC['periscope_drift_page']['password']
+    raise RuntimeError('must have periscope_drift_page authentication in ~/.netrc')
 
 # -----------------------------------
 # Establish base URL, trending pages,
@@ -43,111 +40,58 @@ PASSWORD = NETRC['periscope_drift_page']['password']
 
 URL_ASPECT = "https://cxc.cfa.harvard.edu/mta/ASPECT"
 
-trending_pages = {
-    "Reports": [
-        "acq_stat_reports",
-        "gui_stat_reports",
-        "periscope_drift_reports", # periscope page requires a username/password
-    ],
-    "Perigee": [
-        "perigee_health_plots",
-    ],
-    "Generic": [
-        "kalman_watch", 
-        "obc_rate_noise/trending",
-        "fid_drift",
-        "aimpoint_mon",
-        "celmon",
-        "vv_rms",
-        "attitude_error_mon",
-        "fss_check3",
-    ]
-}
+
+def get_elements(soup, element):
+    """
+    Grab various elements from page.
+    """
+    return list(soup.find_all(element))
+
+
+def get_images(soup, image, url):
+    """
+    Find all pngs and gifs.
+    """
+    images = {}
+    for img in soup.find_all(image):
+        if img['src'].endswith('.png') or img['src'].endswith("gif"):
+            # look for all pngs and gifs
+            new_image_url = f'<img src = "{url}{img["src"]}">'
+            images[img['src']] = new_image_url
+    return images
+
+
+def get_tables(soup, tbl, url):
+    """
+    Find all tables.
+    """
+    tables = [table for table in soup.find_all(tbl)]
+    new_tables = [str(table) for table in tables]
+    for index, table in enumerate(new_tables):
+        # replace truncated img src url calls with full url calls;
+        # this allows the script to be run/tested outside network
+        new_tables[index] = re.sub('src="', f'src="{url}/', str(table))
+    return new_tables
+
 
 # ---------------------------------
 # Establish HTML info for each page
 # ---------------------------------
+class BasePage():
+    """
+    Base class for establishing page, URL, and HTML information.
+    """
+    auth = None
 
-class Page():
-    """
-    Establish page, URL, and HTML information.
-    """
     def __init__(self, page):
         self.page = page
-    
-        def get_proper_urls_reports(page):
-            """
-            Get the correct URL for the quarterly timeframe; 50% through the quarter.
-            """
-            for quarter in range(4, 0, -1):
-                year = datetime.now().year
-                # creates the temporary url; starts at Quarter 4 and works backwards
-                url = f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
-                # this page requires a username/password
-                if self.page == "periscope_drift_reports":
-                    page_request = requests.get(url, auth=(USER_PERISCOPE, PASSWORD))
-                else:
-                    page_request = requests.get(url)
-                if page_request.status_code == 200:
-                    # use astropy Table 
-                    table_page = Table.read(page_request.text, format='ascii.html', htmldict={'table_id': 2})
-                    # pull quarterly start and stop dates from page
-                    start_time = table_page['TSTART'][0] 
-                    stop_time = table_page['TSTOP'][0]
-                    stop_minus_start = Chandra.Time.date2secs(stop_time) - Chandra.Time.date2secs(start_time)
-                    # define halfway through the quarter
-                    halfway = Chandra.Time.date2secs(start_time) + stop_minus_start
-                    # is now > 50% through quarter?
-                    if Chandra.Time.date2secs(datetime.now()) > halfway: 
-                        return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
-                    # if not 50% through and it's the first quarter of the year
-                    elif quarter == 1:
-                        # switch to fourth quarter of previous year
-                        return f'{URL_ASPECT}/{self.page}/{year-1}/Q4/' 
-                    else:
-                        # try previous quarter
-                        return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/' 
-                else:
-                    continue
-
-        def get_proper_urls_perigee(page):
-            """
-            Get the correct URL for the monthly perigee page; 50% through month.
-            """
-            now = datetime.now()
-            # if ~halfway through the month
-            if now.day > 15:
-                return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/'
-            else:
-                last_month = datetime.now() + timedelta(days=-27)
-                return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}-M{last_month.month:02}/'
-
-        # Generate the correct URLs for trending
-        if self.page in trending_pages["Reports"]:
-            self.url = get_proper_urls_reports(self.page)
-        elif self.page in trending_pages["Perigee"]:
-            self.url = get_proper_urls_perigee(self.page)
-        elif self.page in trending_pages["Generic"]:
-            self.url = f'{URL_ASPECT}/{page}/'
+        self.url = self.get_url()
 
         # Generate the page requests and verify page is accessible
-        if self.page == "periscope_drift_reports":
-            self.page_request = requests.get(self.url, auth=(USER_PERISCOPE, PASSWORD))
-        else:
-            self.page_request = requests.get(self.url)
-        if self.page_request.status_code == 200:
-            pass
-        else:
-            raise RuntimeError(f'Investigate issues with {self.page}')
+        self.page_request = self.get_page_request()
 
         self.url_text = self.page_request.text
         self.soup = BeautifulSoup(self.url_text, "lxml")
-
-        def get_elements(soup, element):
-            """
-            Grab various elements from page.
-            """
-            return list(self.soup.find_all(element))
 
         # Get various element types
         self.titles = get_elements(self.soup, "title")
@@ -160,42 +104,111 @@ class Page():
         self.divs = get_elements(self.soup, "div")
         self.ems = get_elements(self.soup, "em")
         self.scripts = get_elements(self.soup, "script")
-
-        def get_images(soup, image, url):
-            """
-            Find all pngs and gifs.
-            """
-            images = {}
-            for img in soup.find_all(image):
-                if img['src'].endswith('.png') or img['src'].endswith("gif"): 
-                    # look for all pngs and gifs
-                    new_image_url = f'<img src = "{url}{img["src"]}">'
-                    images[img['src']] = new_image_url
-            return images
-
         self.images = get_images(self.soup, "img", self.url)
-        
-        def get_tables(soup, tbl, url):
-            """
-            Find all tables.
-            """
-            tables = [table for table in soup.find_all(tbl)]
-            new_tables = [str(table) for table in tables]
-            for index, table in enumerate(new_tables):
-                    # replace truncated img src url calls with full url calls;
-                    # this allows the script to be run/tested outside network
-                    new_tables[index] = re.sub('src="', f'src="{url}/', str(table))
-            return new_tables
-        
+
         self.tables = get_tables(self.soup, "table", self.url)
         self.url_html = f'<a href = {str(self.url)}>{str(self.url)}</a><br>'
 
+    def get_page_request(self):
+        if self.auth:
+            page_request = requests.get(self.url, auth=self.auth)
+        else:
+            page_request = requests.get(self.url)
 
+        if page_request.status_code != 200:
+            raise RuntimeError(f'Investigate issues with {self.url}')
+
+        return page_request
+
+
+class GenericPage(BasePage):
+    def get_url(self):
+        return f'{URL_ASPECT}/{self.page}/'
+
+
+class ReportsPage(BasePage):
+    def get_url(self):
+        """
+        Get the correct URL for the quarterly timeframe; 50% through the quarter.
+        """
+        for quarter in range(4, 0, -1):
+            year = datetime.now().year
+            # creates the temporary url; starts at Quarter 4 and works backwards
+            url = f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
+            # this page requires a username/password
+            if self.auth:
+                page_request = requests.get(url, auth=self.auth)
+            else:
+                page_request = requests.get(url)
+
+            if page_request.status_code == 200:
+                # use astropy Table
+                table_page = Table.read(page_request.text, format='ascii.html', htmldict={'table_id': 2})
+                # pull quarterly start and stop dates from page
+                start_time = table_page['TSTART'][0]
+                stop_time = table_page['TSTOP'][0]
+                stop_minus_start = Chandra.Time.date2secs(stop_time) - Chandra.Time.date2secs(start_time)
+                # define halfway through the quarter
+                halfway = Chandra.Time.date2secs(start_time) + stop_minus_start
+                # is now > 50% through quarter?
+                if Chandra.Time.date2secs(datetime.now()) > halfway:
+                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
+                # if not 50% through and it's the first quarter of the year
+                elif quarter == 1:
+                    # switch to fourth quarter of previous year
+                    return f'{URL_ASPECT}/{self.page}/{year-1}/Q4/'
+                else:
+                    # try previous quarter
+                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/'
+            else:
+                continue
+
+        raise RuntimeError(f'failed to find URL for {self.page}')
+
+
+class PeriscopePage(ReportsPage):
+    auth = (NETRC['periscope_drift_page']['login'],
+            NETRC['periscope_drift_page']['password'])
+
+
+class PerigeePage(BasePage):
+    def get_url(self):
+        """
+        Get the correct URL for the monthly perigee page; 50% through month.
+        """
+        now = datetime.now()
+        # if ~halfway through the month
+        if now.day > 15:
+            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/'
+        else:
+            last_month = datetime.now() + timedelta(days=-27)
+            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}-M{last_month.month:02}/'
+
+
+trending_pages = {
+    ReportsPage: [
+        "acq_stat_reports",
+        "gui_stat_reports"],
+    PeriscopePage: [
+        "periscope_drift_reports"],
+    PerigeePage: [
+        "perigee_health_plots"],
+    GenericPage: [
+        "kalman_watch",
+        "obc_rate_noise/trending",
+        "fid_drift",
+        "aimpoint_mon",
+        "celmon",
+        "vv_rms",
+        "attitude_error_mon",
+        "fss_check3",
+    ]
+}
 
 trending_blocks = {}
-for trending_page in trending_pages:
-    for page in trending_pages[trending_page]:
-        trending_blocks[page] = Page(page)
+for page_class in trending_pages:
+    for page in trending_pages[page_class]:
+        trending_blocks[page] = page_class(page)
 
 
 # --------------------------------------------
@@ -277,7 +290,7 @@ html_chunks.extend([
 tb = trending_blocks['obc_rate_noise/trending']
 html_chunks.extend([
     tb.headers3[0],
-    tb.url_html,            
+    tb.url_html,
     tb.images["pitch_time_recent.png"],
     tb.images["yaw_time_recent.png"],
     tb.images["roll_time_recent.png"],
@@ -316,7 +329,7 @@ html_chunks.extend([
     tb.ems[2],
     tb.ems[2].next_sibling,
     tb.anchors[9],
-    tb.anchors[9].next_sibling,           
+    tb.anchors[9].next_sibling,
     tb.divs[2],
     tb.scripts[2],
     "<hr>",
@@ -331,11 +344,11 @@ html_chunks.extend([
     tb.paragraphs[4],
     "<table><tbody><tr><td>",
     tb.images["offsets-ACIS-S.gif"],
-    "</td><td>",            
+    "</td><td>",
     tb.images["offsets-ACIS-I.gif"],
     "</td></tr><tr><td>",
     tb.images["offsets-HRC-S.gif"],
-    "</td><td>",            
+    "</td><td>",
     tb.images["offsets-HRC-I.gif"],
     "</td></tr></tbody></table>",
     "<hr>",
@@ -362,7 +375,7 @@ html_chunks.extend([
     tb.url_html,
     tb.headers3[0],
     tb.images["one_shot_vs_angle.png"],
-    "<hr>",     
+    "<hr>",
 ])
 
 tb = trending_blocks['fss_check3']
@@ -371,8 +384,8 @@ html_chunks.extend([
     tb.url_html,
     "<br>",
     tb.anchors[1],
-    tb.tables[2],  
-    "<hr>",       
+    tb.tables[2],
+    "<hr>",
 ])
 
 
