@@ -85,14 +85,21 @@ class BasePage():
 
     def __init__(self, page):
         self.page = page
-        self.url = self.get_url()
+        # self.current_url preserves ability to grab data from
+        # current urls, versus conditional dates later 
+        # (e.g. acq stats report - acq ids image)
+        self.url, self.current_url = self.get_url()
 
         # Generate the page requests and verify page is accessible
         self.page_request = self.get_page_request()
 
         self.url_text = self.page_request.text
         self.soup = BeautifulSoup(self.url_text, "lxml")
-
+        if self.page != "celmon":
+            for local_link in self.soup.find_all('a'):
+                temp = local_link['href']
+                local_link['href'] = self.url + temp
+                
         # Get various element types
         self.titles = get_elements(self.soup, "title")
         self.headers2 = get_elements(self.soup, "h2")
@@ -105,6 +112,8 @@ class BasePage():
         self.ems = get_elements(self.soup, "em")
         self.scripts = get_elements(self.soup, "script")
         self.images = get_images(self.soup, "img", self.url)
+        if self.page == "acq_stat_reports":
+            self.current_quarter_acq_images = get_images(self.soup, "img", self.current_url)
 
         self.tables = get_tables(self.soup, "table", self.url)
         self.url_html = f'<a href = {str(self.url)}>{str(self.url)}</a><br>'
@@ -123,7 +132,7 @@ class BasePage():
 
 class GenericPage(BasePage):
     def get_url(self):
-        return f'{URL_ASPECT}/{self.page}/'
+        return f'{URL_ASPECT}/{self.page}/', ''
 
 
 class ReportsPage(BasePage):
@@ -152,14 +161,14 @@ class ReportsPage(BasePage):
                 halfway = Chandra.Time.date2secs(start_time) + stop_minus_start
                 # is now > 50% through quarter?
                 if Chandra.Time.date2secs(datetime.now()) > halfway:
-                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
+                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/', ''
                 # if not 50% through and it's the first quarter of the year
                 elif quarter == 1:
                     # switch to fourth quarter of previous year
-                    return f'{URL_ASPECT}/{self.page}/{year-1}/Q4/'
+                    return f'{URL_ASPECT}/{self.page}/{year-1}/Q4/', f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
                 else:
                     # try previous quarter
-                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/'
+                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/', f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
             else:
                 continue
 
@@ -179,10 +188,10 @@ class PerigeePage(BasePage):
         now = datetime.now()
         # if ~halfway through the month
         if now.day > 15:
-            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/'
+            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/', ''
         else:
             last_month = datetime.now() + timedelta(days=-27)
-            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}-M{last_month.month:02}/'
+            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}-M{last_month.month:02}/', ''
 
 
 trending_pages = {
@@ -236,7 +245,7 @@ html_chunks.extend([
     tb.url_html,
     tb.headers3[0],
     tb.tables[1],
-    tb.images["id_acq_stars.png"],
+    tb.current_quarter_acq_images["id_acq_stars.png"],
     tb.images["delta_mag_scatter.png"],
     tb.tables[4],
     "<hr>",
@@ -289,8 +298,11 @@ html_chunks.extend([
 
 tb = trending_blocks['obc_rate_noise/trending']
 html_chunks.extend([
-    tb.headers3[0],
+    tb.headers2[0],
     tb.url_html,
+    '<br>',
+    tb.headers2[0].next_sibling,
+    '<br><br>',
     tb.images["pitch_time_recent.png"],
     tb.images["yaw_time_recent.png"],
     tb.images["roll_time_recent.png"],
