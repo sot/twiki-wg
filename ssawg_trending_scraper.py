@@ -11,16 +11,12 @@ Usage::
 """
 
 import requests
-import netrc
-import argparse
 
 import Ska.ftp
 import Chandra.Time
 from astropy.table import Table
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
-from urllib import request, response, error, parse
-from urllib.request import urlopen
 import re
 import jinja2
 
@@ -86,7 +82,7 @@ class BasePage():
     def __init__(self, page):
         self.page = page
         # self.current_url preserves ability to grab data from
-        # current urls, versus conditional dates later 
+        # current urls, versus conditional dates later
         # (e.g. acq stats report - acq ids image)
         self.url, self.current_url = self.get_url()
 
@@ -99,7 +95,7 @@ class BasePage():
             for local_link in self.soup.find_all('a'):
                 temp = local_link['href']
                 local_link['href'] = self.url + temp
-                
+
         # Get various element types
         self.titles = get_elements(self.soup, "title")
         self.headers2 = get_elements(self.soup, "h2")
@@ -129,6 +125,9 @@ class BasePage():
 
         return page_request
 
+    def get_url(self):
+        raise NotImplementedError
+
 
 class GenericPage(BasePage):
     def get_url(self):
@@ -152,11 +151,13 @@ class ReportsPage(BasePage):
 
             if page_request.status_code == 200:
                 # use astropy Table
-                table_page = Table.read(page_request.text, format='ascii.html', htmldict={'table_id': 2})
+                table_page = (Table.read(page_request.text, format='ascii.html',
+                                         htmldict={'table_id': 2}))
                 # pull quarterly start and stop dates from page
                 start_time = table_page['TSTART'][0]
                 stop_time = table_page['TSTOP'][0]
-                stop_minus_start = Chandra.Time.date2secs(stop_time) - Chandra.Time.date2secs(start_time)
+                stop_minus_start = (Chandra.Time.date2secs(stop_time)
+                                    - Chandra.Time.date2secs(start_time))
                 # define halfway through the quarter
                 halfway = Chandra.Time.date2secs(start_time) + stop_minus_start
                 # is now > 50% through quarter?
@@ -165,10 +166,12 @@ class ReportsPage(BasePage):
                 # if not 50% through and it's the first quarter of the year
                 elif quarter == 1:
                     # switch to fourth quarter of previous year
-                    return f'{URL_ASPECT}/{self.page}/{year-1}/Q4/', f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
+                    return (f'{URL_ASPECT}/{self.page}/{year-1}/Q4/',
+                            f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/')
                 else:
                     # try previous quarter
-                    return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/', f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/'
+                    return (f'{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/',
+                            f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/')
             else:
                 continue
 
@@ -191,7 +194,8 @@ class PerigeePage(BasePage):
             return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/', ''
         else:
             last_month = datetime.now() + timedelta(days=-27)
-            return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}-M{last_month.month:02}/', ''
+            return (f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}'
+                    f'-M{last_month.month:02}/', '')
 
 
 trending_pages = {
@@ -406,9 +410,9 @@ html_chunks.extend([
 # file: trending_template.html
 # --------------------------------------
 
-with open('trending_template.html','r') as fh:
+with open('trending_template.html', 'r') as fh:
     template_text = fh.read()
 template = jinja2.Template(template_text)
-out_html = template.render(html_chunks = html_chunks)
+out_html = template.render(html_chunks=html_chunks)
 with open('trending.html', 'w') as trending_file:
     trending_file.write(out_html)
