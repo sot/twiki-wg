@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -9,9 +11,10 @@ sngle page for efficient viewing.
 Usage::
     $ python ssawg_trending_scraper.py ...
 """
+import argparse
+from pathlib import Path
 
 import requests
-
 import Ska.ftp
 import Chandra.Time
 from astropy.table import Table
@@ -35,6 +38,18 @@ if 'periscope_drift_page' not in NETRC:
 # -----------------------------------
 
 URL_ASPECT = "https://cxc.cfa.harvard.edu/mta/ASPECT"
+
+
+def get_opt():
+    parser = argparse.ArgumentParser(description='Make SSAWG trending page')
+    parser.add_argument('--data-dir',
+                        type=str,
+                        default='.',
+                        help='Output data directory')
+
+    args = parser.parse_args()
+
+    return args
 
 
 def get_elements(soup, element):
@@ -197,6 +212,9 @@ class PerigeePage(BasePage):
             return (f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}'
                     f'-M{last_month.month:02}/', '')
 
+
+# Get main program options before any other processing
+opt = get_opt()
 
 trending_pages = {
     ReportsPage: [
@@ -410,9 +428,11 @@ html_chunks.extend([
 # file: trending_template.html
 # --------------------------------------
 
-with open('trending_template.html', 'r') as fh:
+data_dir = Path(opt.data_dir)
+
+with open(data_dir / 'ssawg_trending_template.html', 'r') as fh:
     template_text = fh.read()
 template = jinja2.Template(template_text)
 out_html = template.render(html_chunks=html_chunks)
-with open('trending.html', 'w') as trending_file:
+with open(data_dir / 'ssawg_trending.html', 'w') as trending_file:
     trending_file.write(out_html)
