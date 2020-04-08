@@ -7,8 +7,12 @@ FLIGHT = SKA
 include /proj/sot/ska/include/Makefile.FLIGHT
 
 # Installed data.
-DATA = task_schedule.cfg index_template.html ssawg_index.html mpcwg_index.html \
-       twg_index.html ssawg_trending_template.html
+DATA = task_schedule.cfg ssawg_trending_template.html index_template.html
+
+# WARNING: if new indexes are installed these will overwrite the existing
+# ones, requiring a full re-build.  Most of the time these do not need
+# re-install.
+INDEXES = ssawg_index.html mpcwg_index.html twg_index.html
 
 SHARE = make_wg_index.py ssawg_trending_scraper.py
 
@@ -20,3 +24,6 @@ install: $(TEST_DEPS)
 #
 	rsync --times --cvs-exclude $(SHARE) $(INSTALL_SHARE)/
 	rsync --times --cvs-exclude $(DATA) $(INSTALL_DATA)/
+
+install_indexes:
+	rsync --times --cvs-exclude $(INDEXES) $(INSTALL_DATA)/
