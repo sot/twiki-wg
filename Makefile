@@ -7,10 +7,10 @@ FLIGHT = SKA
 include /proj/sot/ska/include/Makefile.FLIGHT
 
 # Installed data.
-DATA = task_schedule.cfg index_template.html ssawg_index.html mpcwg_index.html twg_index.html
+DATA = task_schedule.cfg index_template.html ssawg_index.html mpcwg_index.html \
+       twg_index.html ssawg_trending_template.html
 
-# telem_archive uses a number of dedicated perl and IDL scripts
-SHARE = make_wg_index.py
+SHARE = make_wg_index.py ssawg_trending_scraper.py
 
 .PHONY: doc
 
