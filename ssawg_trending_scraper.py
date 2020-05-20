@@ -174,7 +174,7 @@ class ReportsPage(BasePage):
                 stop_minus_start = (Chandra.Time.date2secs(stop_time)
                                     - Chandra.Time.date2secs(start_time))
                 # define halfway through the quarter
-                halfway = Chandra.Time.date2secs(start_time) + stop_minus_start
+                halfway = Chandra.Time.date2secs(start_time) + (stop_minus_start / 2)
                 # is now > 50% through quarter?
                 if Chandra.Time.date2secs(datetime.now()) > halfway:
                     return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/', ''
