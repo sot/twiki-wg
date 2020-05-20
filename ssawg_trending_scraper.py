@@ -16,7 +16,7 @@ from pathlib import Path
 
 import requests
 import Ska.ftp
-import Chandra.Time
+from Chandra.Time import DateTime
 from astropy.table import Table
 from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
@@ -169,14 +169,12 @@ class ReportsPage(BasePage):
                 table_page = (Table.read(page_request.text, format='ascii.html',
                                          htmldict={'table_id': 2}))
                 # pull quarterly start and stop dates from page
-                start_time = table_page['TSTART'][0]
-                stop_time = table_page['TSTOP'][0]
-                stop_minus_start = (Chandra.Time.date2secs(stop_time)
-                                    - Chandra.Time.date2secs(start_time))
+                start_time = DateTime(table_page['TSTART'][0])
+                stop_time = DateTime(table_page['TSTOP'][0])
                 # define halfway through the quarter
-                halfway = Chandra.Time.date2secs(start_time) + (stop_minus_start / 2)
+                halfway = start_time.secs + ((stop_time.secs - start_time.secs) / 2)
                 # is now > 50% through quarter?
-                if Chandra.Time.date2secs(datetime.now()) > halfway:
+                if DateTime().secs > halfway:
                     return f'{URL_ASPECT}/{self.page}/{year}/Q{quarter}/', ''
                 # if not 50% through and it's the first quarter of the year
                 elif quarter == 1:
@@ -205,10 +203,10 @@ class PerigeePage(BasePage):
         """
         now = datetime.now()
         # if ~halfway through the month
-        if now.day > 15:
+        if DateTime().day > 15:
             return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/', ''
         else:
-            last_month = datetime.now() + timedelta(days=-27)
+            last_month = DateTime(DateTime() + timedelta(days=-27))
             return (f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}'
                     f'-M{last_month.month:02}/', '')
 
