@@ -206,7 +206,7 @@ class PerigeePage(BasePage):
         if DateTime().day > 15:
             return f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/', ''
         else:
-            last_month = DateTime(DateTime().secs - (86400 * 27))
+            last_month = DateTime() - 27
             return (f'{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}'
                     f'-M{last_month.mon:02}/', '')
 
