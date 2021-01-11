@@ -407,6 +407,11 @@ html_chunks.extend([
     tb.url_html,
     tb.headers3[0],
     tb.images["one_shot_vs_angle.png"],
+    "<br><br><table><tbody><tr><td>",
+    tb.images["roll_err_vs_time.png"],
+    "</td><td>",
+    tb.images["point_err_vs_time.png"],
+    "</td></tr></tbody></table>",
     "<hr>",
 ])
 
