@@ -223,7 +223,7 @@ trending_pages = {
     PerigeePage: [
         "perigee_health_plots"],
     GenericPage: [
-        "kalman_watch",
+        "kalman_watch3",
         "obc_rate_noise/trending",
         "fid_drift",
         "aimpoint_mon",
@@ -247,14 +247,13 @@ for page_class in trending_pages:
 
 html_chunks = []
 
-tb = trending_blocks['kalman_watch']
+tb = trending_blocks['kalman_watch3']
 html_chunks.extend([
     tb.headers2[0],
     tb.url_html,
     tb.headers3[0],
     tb.paragraphs[1],
-    tb.images['kalman_drop_intervals.png'],
-    '<br><br>',
+    tb.divs[0],
     tb.tables[1],
     "<hr>",
 ])
