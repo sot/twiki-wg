@@ -67,7 +67,7 @@ def get_images(soup, image, url):
     for img in soup.find_all(image):
         if img['src'].endswith('.png') or img['src'].endswith("gif"):
             # look for all pngs and gifs
-            new_image_url = f'<img src = "{url}{img["src"]}">'
+            new_image_url = f'<img src = "{url}{img["src"]}" style="max-width:800px">'
             images[img['src']] = new_image_url
     return images
 
@@ -371,17 +371,12 @@ html_chunks.extend([
     tb.headers2[0],
     tb.url_html,
     tb.headers4[1],
-    tb.paragraphs[3],
-    tb.paragraphs[4],
-    "<table><tbody><tr><td>",
-    tb.images["offsets-ACIS-S.gif"],
-    "</td><td>",
-    tb.images["offsets-ACIS-I.gif"],
-    "</td></tr><tr><td>",
-    tb.images["offsets-HRC-S.gif"],
-    "</td><td>",
-    tb.images["offsets-HRC-I.gif"],
-    "</td></tr></tbody></table>",
+    tb.paragraphs[1],
+    tb.paragraphs[5],
+    tb.images["offsets-ACIS-S-history.png"],
+    tb.images["offsets-ACIS-I-history.png"],
+    tb.images["offsets-HRC-S-history.png"],
+    tb.images["offsets-HRC-I-history.png"],
     "<hr>",
 ])
 
