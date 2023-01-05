@@ -17,6 +17,7 @@ import re
 import traceback
 from datetime import datetime
 from pathlib import Path
+import time
 
 import jinja2
 import requests
@@ -308,10 +309,6 @@ class PerigeePage(BasePage):
         return html_chunks
 
 
-# Get main program options before any other processing
-opt = get_opt()
-
-
 class KalmanWatch3Page(GenericPage):
     page = "kalman_watch3"
 
@@ -474,6 +471,9 @@ class FssCheck3Page(GenericPage):
 
 
 def main():
+    # Get main program options before any other processing
+    opt = get_opt()
+
     html_chunks = []
 
     for page_class in BasePage.page_classes:
@@ -498,7 +498,7 @@ def main():
     with open(data_dir / "ssawg_trending_template.html", "r") as fh:
         template_text = fh.read()
     template = jinja2.Template(template_text)
-    out_html = template.render(html_chunks=html_chunks)
+    out_html = template.render(html_chunks=html_chunks, update_time=time.ctime())
     with open(data_dir / "ssawg_trending.html", "w") as trending_file:
         trending_file.write(out_html)
 
