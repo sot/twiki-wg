@@ -189,7 +189,8 @@ class ReportsPage(BasePage):
                 halfway = start_time.secs + ((stop_time.secs - start_time.secs) / 2)
                 # is now > 50% through quarter?
                 if DateTime().secs > halfway:
-                    return f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/", ""
+                    url = f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/"
+                    return url, url
                 # if not 50% through and it's the first quarter of the year
                 elif quarter == 1:
                     # switch to fourth quarter of previous year
