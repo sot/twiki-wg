@@ -397,7 +397,7 @@ class CelmonPage(GenericPage):
 
     def get_html_chunks(self):
         html_chunks = [
-            self.headers2[0],
+            "<h2>Absolute astrometric accuracy</h2>",
             self.url_html,
             self.headers4[1],
             self.paragraphs[1],
