@@ -10,7 +10,6 @@ import bs4
 import ska_ftp
 
 
-
 TWIKI_URL = 'https://occweb.cfa.harvard.edu/twiki/bin/view/'
 
 
