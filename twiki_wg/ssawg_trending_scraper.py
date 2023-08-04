@@ -494,7 +494,7 @@ def main(args=None):
 
     data_dir = Path(opt.data_dir)
 
-    with open(data_dir / "ssawg_trending_template.html", "r") as fh:
+    with open(Path(__file__).parent / "data" / "ssawg_trending_template.html", "r") as fh:
         template_text = fh.read()
     template = jinja2.Template(template_text)
     out_html = template.render(html_chunks=html_chunks, update_time=time.ctime())
