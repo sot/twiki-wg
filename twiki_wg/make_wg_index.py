@@ -190,7 +190,7 @@ def main(args=None):
         meeting_page = get_twiki_page(meeting, opt.working_group_web)
         try:
             meeting_agenda_ul = get_list_after(meeting_page, 'h2', r'Agenda')
-        except:
+        except Exception:
             meeting_agenda_ul = 'No agenda'
 
         # Dummy soup for making new tags
