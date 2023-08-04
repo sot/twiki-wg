@@ -2,11 +2,14 @@
 # -*- coding: utf-8 -*-
 
 import os
+import re
+from pathlib import Path
+import shutil
 import argparse
 import requests
 import bs4
 import ska_ftp
-import re
+
 
 
 TWIKI_URL = 'https://occweb.cfa.harvard.edu/twiki/bin/view/'
@@ -144,7 +147,13 @@ def main(args=None):
     # page.
     opt = get_opt().parse_args(args=args)
 
-    agendas_filename = os.path.join(opt.data_dir, opt.index_file)
+    data_dir = Path(opt.data_dir)
+    data_dir.mkdir(exist_ok=True)
+    agendas_filename = data_dir / opt.index_file
+    if not agendas_filename.exists():
+        shutil.copyfile(
+            Path(__file__).parent / "data" / opt.index_file, agendas_filename
+        )
     agendas_page = bs4.BeautifulSoup(open(agendas_filename).read(), 'lxml')
     agendas_index = agendas_page.find('div', id='wg_agendas')
 
