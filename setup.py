@@ -3,7 +3,7 @@ from setuptools import setup
 entry_points = {
     "console_scripts": [
         "twiki_wg_make_wg_index=twiki_wg.make_wg_index:main",
-        "twiki_wg_ssawg_trending_scraper=twiki_wg.ssawg_trending_scraper:main"
+        "twiki_wg_ssawg_trending_scraper=twiki_wg.ssawg_trending_scraper:main",
     ]
 }
 
@@ -17,7 +17,5 @@ setup(
     zip_safe=False,
     entry_points=entry_points,
     packages=["twiki_wg"],
-    package_data={
-        "twiki_wg": ["data/*.html", "task_schedule.cfg"]
-    },
+    package_data={"twiki_wg": ["data/*.html", "task_schedule.cfg"]},
 )

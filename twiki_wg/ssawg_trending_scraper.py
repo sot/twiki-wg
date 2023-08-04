@@ -14,16 +14,16 @@ Usage::
 import argparse
 import html
 import re
+import time
 import traceback
 from datetime import datetime
 from pathlib import Path
-import time
 
+import astropy.units as u
 import jinja2
 import requests
 import ska_ftp
 from astropy.table import Table
-import astropy.units as u
 from bs4 import BeautifulSoup
 from cxotime import CxoTime
 
@@ -494,7 +494,9 @@ def main(args=None):
 
     data_dir = Path(opt.data_dir)
 
-    with open(Path(__file__).parent / "data" / "ssawg_trending_template.html", "r") as fh:
+    with open(
+        Path(__file__).parent / "data" / "ssawg_trending_template.html", "r"
+    ) as fh:
         template_text = fh.read()
     template = jinja2.Template(template_text)
     out_html = template.render(html_chunks=html_chunks, update_time=time.ctime())
