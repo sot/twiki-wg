@@ -48,10 +48,7 @@ def get_opt():
     parser.add_argument(
         "--data-dir", type=str, default=".", help="Output data directory"
     )
-
-    args = parser.parse_args()
-
-    return args
+    return parser
 
 
 def get_elements(soup, element):
@@ -472,9 +469,9 @@ class FssCheck3Page(GenericPage):
         return html_chunks
 
 
-def main():
+def main(args=None):
     # Get main program options before any other processing
-    opt = get_opt()
+    opt = get_opt().parse_args(args=args)
 
     html_chunks = []
 
