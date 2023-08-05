@@ -286,8 +286,10 @@ class PerigeePage(BasePage):
         # if ~halfway through the month
         if now.datetime.day > 15:
             return (
-                (f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/"
-                 f"{now.datetime.year}-M{now.datetime.month:02}/"),
+                (
+                    f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/"
+                    f"{now.datetime.year}-M{now.datetime.month:02}/"
+                ),
                 "",
             )
         else:
