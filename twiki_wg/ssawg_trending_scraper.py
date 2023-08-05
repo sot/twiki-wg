@@ -462,8 +462,13 @@ class FssCheck3Page(GenericPage):
             self.headers2[0],
             self.url_html,
             "<br>",
-            self.anchors[1],
+            self.headers3[0],
+            self.tables[1],
+            "<br>",
+            self.headers4[1],
             self.tables[2],
+            self.headers4[2],
+            self.tables[3],
             "<hr>",
         ]
         return html_chunks
