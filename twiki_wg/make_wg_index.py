@@ -194,9 +194,20 @@ def main(args=None):
     for ii, new_link in enumerate(reversed(new_links)):
         meeting = new_link.text  # e.g. StarWorkingGroupMeeting2017x07x12
         meeting_page = get_twiki_page(meeting, opt.working_group_web)
-        try:
-            meeting_agenda_ul = get_list_after(meeting_page, "h2", r"Agenda")
-        except Exception:
+
+        # Get the first of Current Topics or Agenda for the meeting
+        agenda_labels = [r"Current Topics", r"Agenda"]
+        for agenda_label in agenda_labels:
+            for header in ["h3", "h2"]:
+                try:
+                    meeting_agenda_ul = get_list_after(
+                        meeting_page, header, agenda_label
+                    )
+                    break
+                except Exception:
+                    pass
+
+        if not meeting_agenda_ul:
             meeting_agenda_ul = "No agenda"
 
         # Dummy soup for making new tags
