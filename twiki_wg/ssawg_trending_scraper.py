@@ -16,7 +16,6 @@ import html
 import re
 import time
 import traceback
-from datetime import datetime
 from pathlib import Path
 
 import astropy.units as u
@@ -166,7 +165,8 @@ class ReportsPage(BasePage):
         Get the correct URL for the quarterly timeframe; 50% through the quarter.
         """
         for quarter in range(4, 0, -1):
-            year = datetime.now().year
+            now = CxoTime.now()
+            year = now.datetime.year
             # creates the temporary url; starts at Quarter 4 and works backwards
             url = f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/"
             # this page requires a username/password
@@ -282,18 +282,18 @@ class PerigeePage(BasePage):
         """
         Get the correct URL for the monthly perigee page; 50% through month.
         """
-        now = datetime.now()
+        now = CxoTime.now()
         # if ~halfway through the month
-        if now.day > 15:
+        if now.datetime.day > 15:
             return (
-                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/",
+                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.datetime.year}-M{now.datetime.month:02}/",
                 "",
             )
         else:
             last_month = CxoTime.now() - 27 * u.day
             return (
-                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}"
-                f"-M{last_month.mon:02}/",
+                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.datetime.year}"
+                f"-M{last_month.datetime.month:02}/",
                 "",
             )
 
