@@ -197,6 +197,7 @@ def main(args=None):
 
         # Get the first of Current Topics or Agenda for the meeting
         agenda_labels = [r"Current Topics", r"Agenda"]
+        meeting_agenda_ul = None
         for agenda_label in agenda_labels:
             for header in ["h3", "h2"]:
                 try:
@@ -207,7 +208,7 @@ def main(args=None):
                 except Exception:
                     pass
 
-        if not meeting_agenda_ul:
+        if meeting_agenda_ul is None:
             meeting_agenda_ul = "No agenda"
 
         # Dummy soup for making new tags
