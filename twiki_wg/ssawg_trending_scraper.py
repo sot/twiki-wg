@@ -14,23 +14,23 @@ Usage::
 import argparse
 import html
 import re
-import traceback
-from datetime import datetime
-from pathlib import Path
 import time
+import traceback
+from pathlib import Path
 
+import astropy.units as u
 import jinja2
 import requests
-import Ska.ftp
+import ska_ftp
 from astropy.table import Table
 from bs4 import BeautifulSoup
-from Chandra.Time import DateTime
+from cxotime import CxoTime
 
 # ------------------------------------
 # Setup for password-protected site(s)
 # ------------------------------------
 
-NETRC = Ska.ftp.parse_netrc()
+NETRC = ska_ftp.parse_netrc()
 if "periscope_drift_page" not in NETRC:
     raise RuntimeError("must have periscope_drift_page authentication in ~/.netrc")
 
@@ -47,10 +47,7 @@ def get_opt():
     parser.add_argument(
         "--data-dir", type=str, default=".", help="Output data directory"
     )
-
-    args = parser.parse_args()
-
-    return args
+    return parser
 
 
 def get_elements(soup, element):
@@ -168,7 +165,8 @@ class ReportsPage(BasePage):
         Get the correct URL for the quarterly timeframe; 50% through the quarter.
         """
         for quarter in range(4, 0, -1):
-            year = datetime.now().year
+            now = CxoTime.now()
+            year = now.datetime.year
             # creates the temporary url; starts at Quarter 4 and works backwards
             url = f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/"
             # this page requires a username/password
@@ -183,12 +181,12 @@ class ReportsPage(BasePage):
                     page_request.text, format="ascii.html", htmldict={"table_id": 2}
                 )
                 # pull quarterly start and stop dates from page
-                start_time = DateTime(table_page["TSTART"][0])
-                stop_time = DateTime(table_page["TSTOP"][0])
+                start_time = CxoTime(table_page["TSTART"][0])
+                stop_time = CxoTime(table_page["TSTOP"][0])
                 # define halfway through the quarter
                 halfway = start_time.secs + ((stop_time.secs - start_time.secs) / 2)
                 # is now > 50% through quarter?
-                if DateTime().secs > halfway:
+                if CxoTime.now().secs > halfway:
                     url = f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/"
                     return url, url
                 # if not 50% through and it's the first quarter of the year
@@ -284,18 +282,21 @@ class PerigeePage(BasePage):
         """
         Get the correct URL for the monthly perigee page; 50% through month.
         """
-        now = datetime.now()
+        now = CxoTime.now()
         # if ~halfway through the month
-        if DateTime().day > 15:
+        if now.datetime.day > 15:
             return (
-                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{now.year}-M{now.month:02}/",
+                (
+                    f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/"
+                    f"{now.datetime.year}-M{now.datetime.month:02}/"
+                ),
                 "",
             )
         else:
-            last_month = DateTime() - 27
+            last_month = CxoTime.now() - 27 * u.day
             return (
-                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.year}"
-                f"-M{last_month.mon:02}/",
+                f"{URL_ASPECT}/{self.page}/SUMMARY_DATA/{last_month.datetime.year}"
+                f"-M{last_month.datetime.month:02}/",
                 "",
             )
 
@@ -464,16 +465,21 @@ class FssCheck3Page(GenericPage):
             self.headers2[0],
             self.url_html,
             "<br>",
-            self.anchors[1],
+            self.headers3[0],
+            self.tables[1],
+            "<br>",
+            self.headers4[1],
             self.tables[2],
+            self.headers4[2],
+            self.tables[3],
             "<hr>",
         ]
         return html_chunks
 
 
-def main():
+def main(args=None):
     # Get main program options before any other processing
-    opt = get_opt()
+    opt = get_opt().parse_args(args=args)
 
     html_chunks = []
 
@@ -496,7 +502,9 @@ def main():
 
     data_dir = Path(opt.data_dir)
 
-    with open(data_dir / "ssawg_trending_template.html", "r") as fh:
+    with open(
+        Path(__file__).parent / "data" / "ssawg_trending_template.html", "r"
+    ) as fh:
         template_text = fh.read()
     template = jinja2.Template(template_text)
     out_html = template.render(html_chunks=html_chunks, update_time=time.ctime())
