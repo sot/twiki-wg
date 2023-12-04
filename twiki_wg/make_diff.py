@@ -150,7 +150,10 @@ def main():
     print("To save the diff as a PDF for the record for a meeting (FDB, MPCWG):")
     print("- Navigate to:")
     print(f"    {url}/revisions")
-    print("- Click on the earmarked page icon by the ··· (upper right) to see the rich diff.")
+    print(
+        "- Click on the earmarked page icon by the ··· (upper right) "
+        "to see the rich diff."
+    )
     print("- Print to PDF from your browser.")
 
 
