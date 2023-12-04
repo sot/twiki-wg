@@ -8,31 +8,22 @@ import shutil
 from pathlib import Path
 
 import bs4
-import requests
-import ska_ftp
+from kadi import occweb
 
 TWIKI_URL = "https://occweb.cfa.harvard.edu/twiki/bin/view/"
 
 
-def get_user_password():
-    netrc = ska_ftp.parse_netrc()
-    if "occweb" not in netrc:
-        raise RuntimeError("must have occweb auth in ~/.netrc")
-
-    user = netrc["occweb"]["login"]
-    password = netrc["occweb"]["password"]
-    return user, password
-
-
-def get_twiki_page(page, working_group_web):
+def get_twiki_page(page, working_group_web, cache=False):
     """
     Get and parse a TWiki page.
     """
     url = TWIKI_URL + working_group_web + "/" + page
     print("Reading {} twiki page".format(url))
-    user, password = get_user_password()
-    r = requests.get(url, auth=(user, password))
-    out = bs4.BeautifulSoup(r.text, "lxml")
+    # Some TWiki pages have invalid UTF-8 characters, so we need to read as bytes and
+    # decode with errors="replace".
+    bytes = occweb.get_occweb_page(url, cache=cache, binary=True)
+    text = bytes.decode("utf-8", errors="replace")
+    out = bs4.BeautifulSoup(text, "lxml")
 
     return out
 
@@ -42,7 +33,7 @@ def get_list_after(tag, name, text):
     Find <ul> content after ``name`` tag that has ``text``.
     """
     for content_tag in tag.find_all(name):
-        if re.search(text, content_tag.text, re.IGNORECASE):
+        if text is None or re.search(text, content_tag.text, re.IGNORECASE):
             break
     else:
         raise ValueError("no matching tag found")
@@ -125,7 +116,7 @@ def get_opt():
         type=str,
         help="Start date in TWiki format (default=2006x01x01",
     )
-    parser.add_argument("--stop", type=str, help="Stop date")
+    parser.add_argument("--stop", type=str, default="9999x01x01", help="Stop date")
     parser.add_argument(
         "--working-group-web",
         default="Aspect",
@@ -144,7 +135,24 @@ def get_opt():
         type=str,
         help="Meeting archive index page",
     )
+    parser.add_argument(
+        "--cache",
+        default=False,
+        action="store_true",
+        help="Cache TWiki pages (default=False)",
+    )
     return parser
+
+
+def get_meeting_agenda_ul(meeting_page, agenda_labels):
+    for agenda_label in agenda_labels:
+        for header in ["h2", "h3"]:
+            try:
+                meeting_agenda_ul = get_list_after(meeting_page, header, agenda_label)
+                return meeting_agenda_ul
+            except Exception:
+                pass
+    return None
 
 
 def main(args=None):
@@ -184,7 +192,14 @@ def main(args=None):
 
     # Find all the HREF links that are not already in the agendas_index
     links = meeting_list.find_all("a")
-    links = [link for link in links if link.text > opt.meeting_root + opt.start]
+    links = [
+        link
+        for link in links
+        if (
+            link.text > opt.meeting_root + opt.start
+            and link.text < opt.meeting_root + opt.stop
+        )
+    ]
 
     new_links = [link for link in links if not agendas_index.find("div", id=link.text)]
 
@@ -193,21 +208,12 @@ def main(args=None):
     # reference along with an <h2> title.
     for ii, new_link in enumerate(reversed(new_links)):
         meeting = new_link.text  # e.g. StarWorkingGroupMeeting2017x07x12
-        meeting_page = get_twiki_page(meeting, opt.working_group_web)
+        meeting_page = get_twiki_page(meeting, opt.working_group_web, cache=opt.cache)
 
         # Get the first of Current Topics or Agenda for the meeting
-        agenda_labels = [r"Current Topics", r"Agenda"]
-        meeting_agenda_ul = None
-        for agenda_label in agenda_labels:
-            for header in ["h3", "h2"]:
-                try:
-                    meeting_agenda_ul = get_list_after(
-                        meeting_page, header, agenda_label
-                    )
-                    break
-                except Exception:
-                    pass
+        agenda_labels = [r"Current Topics", r"Topics", r"Agenda", None]
 
+        meeting_agenda_ul = get_meeting_agenda_ul(meeting_page, agenda_labels)
         if meeting_agenda_ul is None:
             meeting_agenda_ul = "No agenda"
 
@@ -234,6 +240,10 @@ def main(args=None):
         for tag in agenda_div.find_all("a"):
             if tag["href"].startswith("/twiki"):
                 tag["href"] = "https://occweb.cfa.harvard.edu" + tag["href"]
+
+        for tag in agenda_div.find_all("img"):
+            if tag["src"].startswith("/twiki"):
+                tag["src"] = "https://occweb.cfa.harvard.edu" + tag["src"]
 
         # Insert the new meeting entry at the front of the agendas_index
         agendas_index.insert(0, agenda_div)
