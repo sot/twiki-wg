@@ -144,9 +144,14 @@ def main():
         input=bytes_md[2],
     )
 
+    print()
     print(f"Created gist {url}")
-    print(f"To view the diff go to {url}/revisions")
-    print("Click on the folded page icon in the upper right to see the rich diff.")
+    print()
+    print("To save the diff as a PDF for the record for a meeting (FDB, MPCWG):")
+    print("- Navigate to:")
+    print(f"    {url}/revisions")
+    print("- Click on the earmarked page icon by the ··· (upper right) to see the rich diff.")
+    print("- Print to PDF from your browser.")
 
 
 if __name__ == "__main__":
