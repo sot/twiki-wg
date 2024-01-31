@@ -318,6 +318,7 @@ class KalmanWatch3Page(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
+            self.images["mon_win_kalman_drops_-45d_-1d.png"],
             self.headers3[0],
             self.paragraphs[1],
             self.divs[0],
