@@ -350,7 +350,7 @@ class ObcRateNoisePage(GenericPage):
 
 
 class FidDriftPage(GenericPage):
-    page = "fid_drift"
+    page = "fid_drift_mon3"
 
     def get_html_chunks(self):
         html_chunks = [
