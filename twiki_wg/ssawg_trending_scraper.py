@@ -114,8 +114,9 @@ class BasePage:
         self.soup = BeautifulSoup(self.url_text, "lxml")
         if self.page != "celmon":
             for local_link in self.soup.find_all("a"):
-                temp = local_link["href"]
-                local_link["href"] = self.url + temp
+                if 'href' in local_link:
+                    temp = local_link["href"]
+                    local_link["href"] = self.url + temp
 
         # Get various element types
         self.titles = get_elements(self.soup, "title")
@@ -367,7 +368,7 @@ class FidDriftPage(GenericPage):
 
 
 class AimpointMonPage(GenericPage):
-    page = "aimpoint_mon"
+    page = "aimpoint_mon3"
 
     def get_html_chunks(self):
         html_chunks = [
@@ -377,18 +378,15 @@ class AimpointMonPage(GenericPage):
             self.headers3[1].next_sibling,
             self.tts[0],
             self.tts[0].next_sibling,
-            self.divs[0],
-            self.scripts[0],
-            self.divs[1],
-            self.scripts[1],
+            self.images['observed_aimpoints_dx.png'],
+            self.images['observed_aimpoints_dy.png'],
             self.headers3[2],
             self.headers3[2].next_sibling,
-            self.ems[2],
-            self.ems[2].next_sibling,
-            self.anchors[9],
-            self.anchors[9].next_sibling,
-            self.divs[2],
-            self.scripts[2],
+            self.ems[1],
+            self.ems[1].next_sibling,
+            self.anchors[10],
+            self.anchors[10].next_sibling,
+            self.images['intra_obs_dy_dz.png'],
             "<hr>",
         ]
         return html_chunks
