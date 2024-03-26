@@ -382,7 +382,7 @@ class FidDriftPage(GenericPage):
 
 
 class AimpointMonPage(GenericPage):
-    page = "aimpoint_mon"
+    page = "aimpoint_mon3"
 
     def get_html_chunks(self):
         html_chunks = [
@@ -392,18 +392,15 @@ class AimpointMonPage(GenericPage):
             self.headers3[1].next_sibling,
             self.tts[0],
             self.tts[0].next_sibling,
-            self.divs[0],
-            self.scripts[0],
-            self.divs[1],
-            self.scripts[1],
+            self.images["observed_aimpoints_dx.png"],
+            self.images["observed_aimpoints_dy.png"],
             self.headers3[2],
             self.headers3[2].next_sibling,
-            self.ems[2],
-            self.ems[2].next_sibling,
-            self.anchors[9],
-            self.anchors[9].next_sibling,
-            self.divs[2],
-            self.scripts[2],
+            self.ems[1],
+            self.ems[1].next_sibling,
+            self.ems[1].next_sibling.next_sibling,
+            self.ems[1].next_sibling.next_sibling.next_sibling,
+            self.images["intra_obs_dy_dz.png"],
             "<hr>",
         ]
         return html_chunks
