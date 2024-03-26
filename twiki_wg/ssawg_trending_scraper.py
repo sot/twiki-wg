@@ -114,9 +114,8 @@ class BasePage:
         self.soup = BeautifulSoup(self.url_text, "lxml")
         if self.page != "celmon":
             for local_link in self.soup.find_all("a"):
-                if "href" in local_link:
-                    temp = local_link["href"]
-                    local_link["href"] = self.url + temp
+                temp = local_link["href"]
+                local_link["href"] = self.url + temp
 
         # Get various element types
         self.titles = get_elements(self.soup, "title")
@@ -384,8 +383,8 @@ class AimpointMonPage(GenericPage):
             self.headers3[2].next_sibling,
             self.ems[1],
             self.ems[1].next_sibling,
-            self.anchors[10],
-            self.anchors[10].next_sibling,
+            self.ems[1].next_sibling.next_sibling,
+            self.ems[1].next_sibling.next_sibling.next_sibling,
             self.images["intra_obs_dy_dz.png"],
             "<hr>",
         ]
