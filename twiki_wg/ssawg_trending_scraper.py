@@ -311,6 +311,21 @@ class PerigeePage(BasePage):
         return html_chunks
 
 
+class WrongBoxAcqAnomPage(GenericPage):
+    page = "wrong_box_anom"
+
+    def get_html_chunks(self):
+        html_chunks = [
+            self.headers2[0],
+            self.url_html,
+            self.images["wrong_box.png"],
+            self.headers4[0],
+            self.tables[1],
+            "<hr>",
+        ]
+        return html_chunks
+
+
 class KalmanWatch3Page(GenericPage):
     page = "kalman_watch3"
 
