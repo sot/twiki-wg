@@ -5,6 +5,7 @@ entry_points = {
         "twiki_wg_make_wg_index=twiki_wg.make_wg_index:main",
         "twiki_wg_ssawg_trending_scraper=twiki_wg.ssawg_trending_scraper:main",
         "twiki_make_diff = twiki_wg.make_diff:main",
+        "twiki_test = twiki_wg.test_trending_page:main",
     ]
 }
 
