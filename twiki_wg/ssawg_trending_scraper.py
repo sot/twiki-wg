@@ -11,6 +11,7 @@ sngle page for efficient viewing.
 Usage::
     $ python ssawg_trending_scraper.py ...
 """
+
 import argparse
 import html
 import re
@@ -485,13 +486,10 @@ class FssCheck3Page(GenericPage):
         return html_chunks
 
 
-def main(args=None):
-    # Get main program options before any other processing
-    opt = get_opt().parse_args(args=args)
-
+def scrape_pages(page_classes, output_file):
+    """Scrape all pages associated with the given classes and write to output file."""
     html_chunks = []
-
-    for page_class in BasePage.page_classes:
+    for page_class in page_classes:
         trend_page = page_class()
         try:
             trend_page.parse_page()
@@ -508,16 +506,20 @@ def main(args=None):
     # file: trending_template.html
     # --------------------------------------
 
-    data_dir = Path(opt.data_dir)
-
     with open(
         Path(__file__).parent / "data" / "ssawg_trending_template.html", "r"
     ) as fh:
         template_text = fh.read()
     template = jinja2.Template(template_text)
     out_html = template.render(html_chunks=html_chunks, update_time=time.ctime())
-    with open(data_dir / "ssawg_trending.html", "w") as trending_file:
+    with open(output_file, "w") as trending_file:
         trending_file.write(out_html)
+
+
+def main(args=None):
+    # Get main program options before any other processing
+    opt = get_opt().parse_args(args=args)
+    scrape_pages(BasePage.page_classes, Path(opt.data_dir) / "ssawg_trending.html")
 
 
 if __name__ == "__main__":
