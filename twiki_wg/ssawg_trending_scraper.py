@@ -129,11 +129,6 @@ class BasePage:
         self.ems = get_elements(self.soup, "em")
         self.scripts = get_elements(self.soup, "script")
         self.images = get_images(self.soup, "img", self.url)
-        if self.page == "acq_stat_reports":
-            self.current_quarter_acq_images = get_images(
-                self.soup, "img", self.current_url
-            )
-
         self.tables = get_tables(self.soup, "table", self.url)
 
     def get_page_request(self):
@@ -208,18 +203,18 @@ class ReportsPage(BasePage):
         raise RuntimeError(f"failed to find URL for {self.page}")
 
 
-class AcqStatReportsPage(ReportsPage):
+class AcqStatReportsPage(GenericPage):
     page = "acq_stat_reports"
 
     def get_html_chunks(self):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.headers3[0],
-            self.tables[1],
-            self.current_quarter_acq_images["id_acq_stars.png"],
-            self.images["delta_mag_scatter.png"],
-            self.tables[4],
+            self.headers3[1],
+            self.images["quarter/id_acq_stars.png"],
+            self.images["quarter/fail_rate_plot.png"],
+            self.images["quarter/mag_pointhist.png"],
+            self.images["quarter/delta_mag_scatter.png"],
             "<hr>",
         ]
         return html_chunks
