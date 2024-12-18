@@ -213,8 +213,8 @@ class AcqStatReportsPage(GenericPage):
             self.headers3[1],
             self.images["quarter/id_acq_stars.png"],
             self.images["quarter/fail_rate_plot.png"],
+            self.images["quarter/fail_rate_plot_borderline.png"],
             self.images["quarter/mag_pointhist.png"],
-            self.images["quarter/delta_mag_scatter.png"],
             "<hr>",
         ]
         return html_chunks
