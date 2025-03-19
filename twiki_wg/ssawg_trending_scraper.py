@@ -338,6 +338,19 @@ class KalmanWatch3Page(GenericPage):
         return html_chunks
 
 
+class HighBackgroundPage(GenericPage):
+    page = "aca_hi_bgd_mon"
+
+    def get_html_chunks(self):
+        html_chunks = [
+            self.headers4[0],
+            self.url_html,
+            self.divs[1],
+            "<hr>",
+        ]
+        return html_chunks
+
+
 class ObcRateNoisePage(GenericPage):
     page = "obc_rate_noise/trending"
 
