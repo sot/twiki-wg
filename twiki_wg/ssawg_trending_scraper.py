@@ -83,6 +83,13 @@ def get_tables(soup, tbl, url):
     return new_tables
 
 
+def get_plotly_figures(soup):
+    plotly_figures = [
+        div for div in soup.find_all("div", attrs={"class": ["plotly-graph-div"]})
+    ]
+    return {p.attrs["id"]: p.fetchParents()[0] for p in plotly_figures}
+
+
 # ---------------------------------
 # Establish HTML info for each page
 # ---------------------------------
@@ -130,6 +137,7 @@ class BasePage:
         self.scripts = get_elements(self.soup, "script")
         self.images = get_images(self.soup, "img", self.url)
         self.tables = get_tables(self.soup, "table", self.url)
+        self.plotly_figures = get_plotly_figures(self.soup)
 
     def get_page_request(self):
         if self.auth:
@@ -244,8 +252,8 @@ class GuiStatReportsPage(ReportsPage):
         return html_chunks
 
 
-class PeriscopePage(ReportsPage):
-    page = "periscope_drift_reports"
+class PeriscopePage(GenericPage):
+    page = "periscope_drift"
     auth = (
         NETRC["periscope_drift_page"]["login"],
         NETRC["periscope_drift_page"]["password"],
@@ -255,17 +263,8 @@ class PeriscopePage(ReportsPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.headers3[0],
-            self.tables[1],
-            self.headers3[1],
-            self.images["drift_histogram.png"],
-            self.headers3[2],
-            "<table><tbody><tr><td>",
-            self.images["large_drift_ang_y_corr.png"],
-            "</td><td>",
-            self.images["large_drift_ang_z_corr.png"],
-            "</td></tr></tbody></table>",
-            "<hr>",
+            self.plotly_figures["drift_history_4"].fetchParents()[0],
+            self.plotly_figures["drift_figure_4"].fetchParents()[0],
         ]
         return html_chunks
 
