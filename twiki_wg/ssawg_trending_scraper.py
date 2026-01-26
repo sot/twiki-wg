@@ -65,7 +65,7 @@ def get_images(soup, image, url):
     for img in soup.find_all(image):
         if img["src"].endswith(".png") or img["src"].endswith("gif"):
             # look for all pngs and gifs
-            new_image_url = f'<img src = "{url}{img["src"]}" style="max-width:800px">'
+            new_image_url = f'<img src = "{url}/{img["src"]}" style="max-width:800px">'
             images[img["src"]] = new_image_url
     return images
 
@@ -112,6 +112,9 @@ class BasePage:
         # current urls, versus conditional dates later
         # (e.g. acq stats report - acq ids image)
         self.url, self.current_url = self.get_url()
+        # this removes a trailing slash and index.html
+        # because a common pattern in what follows is {self.url}/{path}
+        url_root = re.sub("/$", "", re.sub("index.html$", "", self.url))
         self.url_html = f"<a href = {str(self.url)}>{str(self.url)}</a><br>"
 
         # Generate the page requests and verify page is accessible
@@ -122,7 +125,7 @@ class BasePage:
         if self.page != "celmon":
             for local_link in self.soup.find_all("a"):
                 temp = local_link["href"]
-                local_link["href"] = self.url + temp
+                local_link["href"] = f"{url_root}/{temp}"
 
         # Get various element types
         self.titles = get_elements(self.soup, "title")
@@ -135,8 +138,8 @@ class BasePage:
         self.divs = get_elements(self.soup, "div")
         self.ems = get_elements(self.soup, "em")
         self.scripts = get_elements(self.soup, "script")
-        self.images = get_images(self.soup, "img", self.url)
-        self.tables = get_tables(self.soup, "table", self.url)
+        self.images = get_images(self.soup, "img", url_root)
+        self.tables = get_tables(self.soup, "table", url_root)
         self.plotly_figures = get_plotly_figures(self.soup)
 
     def get_page_request(self):
