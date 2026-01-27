@@ -65,7 +65,7 @@ def get_images(soup, image, url):
     for img in soup.find_all(image):
         if img["src"].endswith(".png") or img["src"].endswith("gif"):
             # look for all pngs and gifs
-            new_image_url = f'<img src = "{url}{img["src"]}" style="max-width:800px">'
+            new_image_url = f'<img src = "{url}/{img["src"]}" style="max-width:800px">'
             images[img["src"]] = new_image_url
     return images
 
@@ -81,6 +81,13 @@ def get_tables(soup, tbl, url):
         # this allows the script to be run/tested outside network
         new_tables[index] = re.sub('src="', f'src="{url}/', str(table))
     return new_tables
+
+
+def get_plotly_figures(soup):
+    plotly_figures = [
+        div for div in soup.find_all("div", attrs={"class": ["plotly-graph-div"]})
+    ]
+    return {p.attrs["id"]: p.fetchParents()[0] for p in plotly_figures}
 
 
 # ---------------------------------
@@ -105,6 +112,9 @@ class BasePage:
         # current urls, versus conditional dates later
         # (e.g. acq stats report - acq ids image)
         self.url, self.current_url = self.get_url()
+        # this removes a trailing slash and index.html
+        # because a common pattern in what follows is {self.url}/{path}
+        url_root = re.sub("/$", "", re.sub("index.html$", "", self.url))
         self.url_html = f"<a href = {str(self.url)}>{str(self.url)}</a><br>"
 
         # Generate the page requests and verify page is accessible
@@ -115,7 +125,7 @@ class BasePage:
         if self.page != "celmon":
             for local_link in self.soup.find_all("a"):
                 temp = local_link["href"]
-                local_link["href"] = self.url + temp
+                local_link["href"] = f"{url_root}/{temp}"
 
         # Get various element types
         self.titles = get_elements(self.soup, "title")
@@ -128,8 +138,9 @@ class BasePage:
         self.divs = get_elements(self.soup, "div")
         self.ems = get_elements(self.soup, "em")
         self.scripts = get_elements(self.soup, "script")
-        self.images = get_images(self.soup, "img", self.url)
-        self.tables = get_tables(self.soup, "table", self.url)
+        self.images = get_images(self.soup, "img", url_root)
+        self.tables = get_tables(self.soup, "table", url_root)
+        self.plotly_figures = get_plotly_figures(self.soup)
 
     def get_page_request(self):
         if self.auth:
@@ -244,8 +255,8 @@ class GuiStatReportsPage(ReportsPage):
         return html_chunks
 
 
-class PeriscopePage(ReportsPage):
-    page = "periscope_drift_reports"
+class PeriscopePage(GenericPage):
+    page = "periscope_drift"
     auth = (
         NETRC["periscope_drift_page"]["login"],
         NETRC["periscope_drift_page"]["password"],
@@ -255,16 +266,8 @@ class PeriscopePage(ReportsPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.headers3[0],
-            self.tables[1],
-            self.headers3[1],
-            self.images["drift_histogram.png"],
-            self.headers3[2],
-            "<table><tbody><tr><td>",
-            self.images["large_drift_ang_y_corr.png"],
-            "</td><td>",
-            self.images["large_drift_ang_z_corr.png"],
-            "</td></tr></tbody></table>",
+            self.plotly_figures["drift_history_4"].fetchParents()[0],
+            # self.plotly_figures["drift_figure_4"].fetchParents()[0],
             "<hr>",
         ]
         return html_chunks
