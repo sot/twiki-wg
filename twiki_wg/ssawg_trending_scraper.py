@@ -87,7 +87,7 @@ def get_plotly_figures(soup):
     plotly_figures = [
         div for div in soup.find_all("div", attrs={"class": ["plotly-graph-div"]})
     ]
-    return {p.attrs["id"]: p.fetchParents()[0] for p in plotly_figures}
+    return {p.attrs["id"]: p.find_parents()[0] for p in plotly_figures}
 
 
 # ---------------------------------
@@ -266,7 +266,7 @@ class PeriscopePage(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.plotly_figures["drift_history_4"].fetchParents()[0],
+            self.plotly_figures["drift_history_4"].find_parents()[0],
             # self.plotly_figures["drift_figure_4"].fetchParents()[0],
             "<hr>",
         ]
