@@ -83,6 +83,13 @@ def get_tables(soup, tbl, url):
     return new_tables
 
 
+def get_editable_tables(soup, tbl):
+    """
+    Find all tables and return as BeautifulSoup objects for further editing.
+    """
+    return [table for table in soup.find_all(tbl)]
+
+
 def get_plotly_figures(soup):
     plotly_figures = [
         div for div in soup.find_all("div", attrs={"class": ["plotly-graph-div"]})
@@ -140,6 +147,7 @@ class BasePage:
         self.scripts = get_elements(self.soup, "script")
         self.images = get_images(self.soup, "img", url_root)
         self.tables = get_tables(self.soup, "table", url_root)
+        self.editable_tables = get_editable_tables(self.soup, "table")
         self.plotly_figures = get_plotly_figures(self.soup)
 
     def get_page_request(self):
@@ -313,14 +321,22 @@ class KalmanWatch3Page(GenericPage):
     page = "kalman_watch3"
 
     def get_html_chunks(self):
+        # Limit the main table to the first 10 rows (excluding header)
+        table_bs = self.editable_tables[1]  # Get the editable table object
+        rows = table_bs.find_all("tr")
+        if len(rows) > 11:
+            # Keep header + first 10 data rows
+            for row in rows[11:]:
+                row.decompose()
+        limited_table_html = str(table_bs)
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.divs[0],
+            f'<div class="free-width-block">{self.divs[0]}</div>',
             self.headers3[0],
             self.paragraphs[1],
-            self.divs[2],
-            self.tables[1],
+            f'<div class="free-width-block">{self.divs[2]}</div>',
+            limited_table_html,
             "<hr>",
         ]
         return html_chunks
