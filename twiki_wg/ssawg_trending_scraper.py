@@ -11,6 +11,7 @@ sngle page for efficient viewing.
 Usage::
     $ python ssawg_trending_scraper.py ...
 """
+
 import argparse
 import html
 import re
@@ -207,13 +208,13 @@ class ReportsPage(BasePage):
                 elif quarter == 1:
                     # switch to fourth quarter of previous year
                     return (
-                        f"{URL_ASPECT}/{self.page}/{year-1}/Q4/",
+                        f"{URL_ASPECT}/{self.page}/{year - 1}/Q4/",
                         f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/",
                     )
                 else:
                     # try previous quarter
                     return (
-                        f"{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/",
+                        f"{URL_ASPECT}/{self.page}/{year}/Q{quarter - 1}/",
                         f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/",
                     )
             else:
