@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import argparse
@@ -56,8 +55,9 @@ def find_tag(tag, name, text):
 
 def get_other_notebooks(agenda_div, meeting_page):
     """
-    Get links to jupyter notebooks which are within the meeting page
-    but NOT already in the main agenda.
+    Get links to jupyter notebooks which are within the meeting page.
+
+    These will be notebooks that are NOT already in the main agenda.
     """
     # Notebooks within the new agenda_div
     agenda_nbs = {}
@@ -87,7 +87,7 @@ def get_other_notebooks(agenda_div, meeting_page):
         out.append(h3)
 
         ul = soup.new_tag("ul")
-        for href, tag in other_nbs:
+        for _, tag in other_nbs:
             li = soup.new_tag("li")
             li.append(tag)
             ul.append(li)

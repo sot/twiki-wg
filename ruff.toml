@@ -19,7 +19,7 @@ lint.extend-ignore = [
   # "C402", # Unnecessary generator (rewrite as a dict comprehension)
   # "C405", # Unnecessary `list` literal (rewrite as a `set` literal)
   # "C408", # Unnecessary `dict` call (rewrite as a literal)
-  # "C416", # Unnecessary `dict` comprehension (rewrite using `dict()`)
+  "C416", # Unnecessary `dict` comprehension (rewrite using `dict()`)
   # "G010", # warn is deprecated in favor of warning
   # "PYI056", # Calling `.append()` on `__all__` may not be supported by all type checkers
 ]

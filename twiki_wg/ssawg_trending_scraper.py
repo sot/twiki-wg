@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -275,7 +274,9 @@ class PeriscopePage(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            f'<div class="free-width-block">{self.plotly_figures["drift_history_4"].find_parents()[0]}</div>',
+            '<div class="free-width-block">',
+            self.plotly_figures["drift_history_4"].find_parents()[0],
+            "</div>",
             # self.plotly_figures["drift_figure_4"].fetchParents()[0],
             "<hr>",
         ]
