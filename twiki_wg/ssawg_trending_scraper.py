@@ -266,7 +266,7 @@ class PeriscopePage(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.plotly_figures["drift_history_4"].find_parents()[0],
+            f'<div class="free-width-block">{self.plotly_figures["drift_history_4"].find_parents()[0]}</div>',
             # self.plotly_figures["drift_figure_4"].fetchParents()[0],
             "<hr>",
         ]
