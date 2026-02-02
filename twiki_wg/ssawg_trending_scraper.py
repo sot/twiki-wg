@@ -274,10 +274,9 @@ class PeriscopePage(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            '<div class="free-width-block">',
+            "<div style='width:1100px; height:500px'>",
             self.plotly_figures["drift_history_4"].find_parents()[0],
             "</div>",
-            # self.plotly_figures["drift_figure_4"].fetchParents()[0],
             "<hr>",
         ]
         return html_chunks
@@ -330,14 +329,15 @@ class KalmanWatch3Page(GenericPage):
             # Keep header + first 10 data rows
             for row in rows[11:]:
                 row.decompose()
+        # Add class to table
+        table_bs["class"] = table_bs.get("class", []) + ["kalman-watch-table"]
         limited_table_html = str(table_bs)
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            f'<div class="free-width-block">{self.divs[0]}</div>',
+            self.divs[0],
             self.headers3[0],
             self.paragraphs[1],
-            f'<div class="free-width-block">{self.divs[2]}</div>',
             limited_table_html,
             "<hr>",
         ]
