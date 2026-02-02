@@ -345,6 +345,7 @@ class KalmanWatch3Page(GenericPage):
             self.divs[0],
             self.headers3[0],
             self.paragraphs[1],
+            self.divs[2],
             limited_table_html,
             "<hr>",
         ]
