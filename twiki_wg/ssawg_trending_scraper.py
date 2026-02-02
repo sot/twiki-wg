@@ -322,16 +322,23 @@ class KalmanWatch3Page(GenericPage):
     page = "kalman_watch3"
 
     def get_html_chunks(self):
-        # Limit the main table to the first 10 rows (excluding header)
+        # Limit the data table to the first 10 rows (excluding header)
         table_bs = self.editable_tables[1]  # Get the editable table object
         rows = table_bs.find_all("tr")
-        if len(rows) > 11:
-            # Keep header + first 10 data rows
-            for row in rows[11:]:
-                row.decompose()
+        header = rows[0]
+        data_rows = rows[1:11]  # first 10 data rows
+        # Create a new table with the same attributes
+        new_table = BeautifulSoup("<table></table>", "lxml").table
+        for attr, value in table_bs.attrs.items():
+            new_table[attr] = value
         # Add class to table
-        table_bs["class"] = table_bs.get("class", []) + ["kalman-watch-table"]
-        limited_table_html = str(table_bs)
+        new_table["class"] = new_table.get("class", []) + ["kalman-watch-table"]
+        # Append header and data rows
+        new_table.append(header)
+        for row in data_rows:
+            new_table.append(row)
+        limited_table_html = str(new_table)
+
         html_chunks = [
             self.headers2[0],
             self.url_html,
