@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 """
@@ -11,6 +10,7 @@ sngle page for efficient viewing.
 Usage::
     $ python ssawg_trending_scraper.py ...
 """
+
 import argparse
 import html
 import re
@@ -83,11 +83,18 @@ def get_tables(soup, tbl, url):
     return new_tables
 
 
+def get_editable_tables(soup, tbl):
+    """
+    Find all tables and return as BeautifulSoup objects for further editing.
+    """
+    return [table for table in soup.find_all(tbl)]
+
+
 def get_plotly_figures(soup):
     plotly_figures = [
         div for div in soup.find_all("div", attrs={"class": ["plotly-graph-div"]})
     ]
-    return {p.attrs["id"]: p.fetchParents()[0] for p in plotly_figures}
+    return {p.attrs["id"]: p.find_parents()[0] for p in plotly_figures}
 
 
 # ---------------------------------
@@ -140,6 +147,7 @@ class BasePage:
         self.scripts = get_elements(self.soup, "script")
         self.images = get_images(self.soup, "img", url_root)
         self.tables = get_tables(self.soup, "table", url_root)
+        self.editable_tables = get_editable_tables(self.soup, "table")
         self.plotly_figures = get_plotly_figures(self.soup)
 
     def get_page_request(self):
@@ -199,13 +207,13 @@ class ReportsPage(BasePage):
                 elif quarter == 1:
                     # switch to fourth quarter of previous year
                     return (
-                        f"{URL_ASPECT}/{self.page}/{year-1}/Q4/",
+                        f"{URL_ASPECT}/{self.page}/{year - 1}/Q4/",
                         f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/",
                     )
                 else:
                     # try previous quarter
                     return (
-                        f"{URL_ASPECT}/{self.page}/{year}/Q{quarter-1}/",
+                        f"{URL_ASPECT}/{self.page}/{year}/Q{quarter - 1}/",
                         f"{URL_ASPECT}/{self.page}/{year}/Q{quarter}/",
                     )
             else:
@@ -266,8 +274,9 @@ class PeriscopePage(GenericPage):
         html_chunks = [
             self.headers2[0],
             self.url_html,
-            self.plotly_figures["drift_history_4"].fetchParents()[0],
-            # self.plotly_figures["drift_figure_4"].fetchParents()[0],
+            "<div style='width:1100px; height:500px'>",
+            self.plotly_figures["drift_history_4"].find_parents()[0],
+            "</div>",
             "<hr>",
         ]
         return html_chunks
@@ -313,6 +322,23 @@ class KalmanWatch3Page(GenericPage):
     page = "kalman_watch3"
 
     def get_html_chunks(self):
+        # Limit the data table to the first 10 rows (excluding header)
+        table_bs = self.editable_tables[1]  # Get the editable table object
+        rows = table_bs.find_all("tr")
+        header = rows[0]
+        data_rows = rows[1:11]  # first 10 data rows
+        # Create a new table with the same attributes
+        new_table = BeautifulSoup("<table></table>", "lxml").table
+        for attr, value in table_bs.attrs.items():
+            new_table[attr] = value
+        # Add class to table
+        new_table["class"] = new_table.get("class", []) + ["kalman-watch-table"]
+        # Append header and data rows
+        new_table.append(header)
+        for row in data_rows:
+            new_table.append(row)
+        limited_table_html = str(new_table)
+
         html_chunks = [
             self.headers2[0],
             self.url_html,
@@ -320,7 +346,7 @@ class KalmanWatch3Page(GenericPage):
             self.headers3[0],
             self.paragraphs[1],
             self.divs[2],
-            self.tables[1],
+            limited_table_html,
             "<hr>",
         ]
         return html_chunks
