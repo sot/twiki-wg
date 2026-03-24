@@ -386,6 +386,28 @@ class ObcRateNoisePage(GenericPage):
         return html_chunks
 
 
+class AttitudeErrorMonPage(GenericPage):
+    page = "attitude_error_mon"
+
+    def get_html_chunks(self):
+        html_chunks = [
+            self.headers2[0],
+            self.headers2[0].next_sibling,
+            "<br><br>",
+            self.url_html,
+            self.headers3[0],
+            self.tables[1],
+            self.headers3[1],
+            self.paragraphs[1],
+            self.tables[2],
+            self.headers2[1],
+            self.tables[3],
+            "<br></br><br></br>",
+            "<hr>",
+        ]
+        return html_chunks
+
+
 class FidDriftPage(GenericPage):
     page = "fid_drift_mon3"
 
@@ -460,28 +482,6 @@ class VvRmsPage(GenericPage):
             "</td><td>",
             self.images["hist2d_fig_n100.png"],
             "</td></tr></tbody></table>",
-            "<hr>",
-        ]
-        return html_chunks
-
-
-class AttitudeErrorMonPage(GenericPage):
-    page = "attitude_error_mon"
-
-    def get_html_chunks(self):
-        html_chunks = [
-            self.headers2[0],
-            self.headers2[0].next_sibling,
-            "<br><br>",
-            self.url_html,
-            self.headers3[0],
-            self.tables[1],
-            self.headers3[1],
-            self.paragraphs[1],
-            self.tables[2],
-            self.headers2[1],
-            self.tables[3],
-            "<br></br><br></br>",
             "<hr>",
         ]
         return html_chunks
